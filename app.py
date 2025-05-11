@@ -38,7 +38,7 @@ trait_groups = {
 }
 
 # -------------------
-# trait value 분해 함수 (모든 구분자 대응 + 소문자화)
+# trait value 분해 함수
 # -------------------
 def split_trait_values(val):
     if pd.isna(val):
@@ -94,9 +94,13 @@ elif page == "Find Flowers by Trait":
     filters = {}
     for trait in selected_traits:
         value_options = extract_unique_values(trait)
-        selected_vals = st.multiselect(f"Values for **{trait}**", options=value_options)
+        # 🟢 사용자가 선택한 값을 분해해서 리스트로 저장
+        raw_selected_vals = st.multiselect(f"Values for **{trait}**", options=value_options)
+        selected_vals = []
+        for val in raw_selected_vals:
+            selected_vals.extend(split_trait_values(val))
         if selected_vals:
-            filters[trait] = selected_vals
+            filters[trait] = list(set(selected_vals))
 
     if filters:
         filtered_df = df.copy()
