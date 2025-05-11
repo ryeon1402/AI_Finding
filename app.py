@@ -38,12 +38,28 @@ trait_groups = {
 }
 
 # -------------------
-# trait value 분해 함수
+# trait value 분해 함수 (검색용)
 # -------------------
 def split_trait_values(val):
     if pd.isna(val):
         return []
     return [v.strip().lower() for v in re.split(r",| - |–| to | and |\+|-", str(val)) if v.strip()]
+
+# -------------------
+# 드롭다운에는 쉼표(,)만 분해해서 개별로 표시
+# 복합 표현(to, -, and 등)은 그대로 유지
+# -------------------
+def extract_dropdown_values(trait):
+    values = df[trait].dropna().astype(str)
+    dropdown_set = set()
+    for val in values:
+        if ',' in val:
+            parts = val.split(',')
+            for part in parts:
+                dropdown_set.add(part.strip())
+        else:
+            dropdown_set.add(val.strip())
+    return sorted(dropdown_set)
 
 # -------------------
 # 페이지 선택
@@ -85,11 +101,10 @@ elif page == "Find Flowers by Trait":
 
     filters = {}
     for trait in selected_traits:
-        # ✅ 드롭다운에는 원본 값 그대로 표시
-        value_options = sorted(df[trait].dropna().astype(str).unique())
+        value_options = extract_dropdown_values(trait)  # 쉼표 분리만 적용
         raw_selected_vals = st.multiselect(f"Values for **{trait}**", options=value_options)
 
-        # ✅ 선택된 값을 split해서 검색용으로 변환
+        # 검색용: split_trait_values로 모든 구분자 분해
         selected_vals = []
         for val in raw_selected_vals:
             selected_vals.extend(split_trait_values(val.lower()))
