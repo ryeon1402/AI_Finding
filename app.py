@@ -3,7 +3,7 @@ import pandas as pd
 import re
 
 st.set_page_config(page_title="Species Trait Viewer", layout="wide")
-st.title("🌿 Species Trait Viewer (AI Result)")
+st.title("🌿 Species Trait Viewer")
 
 # -------------------
 # CSV 데이터 불러오기
