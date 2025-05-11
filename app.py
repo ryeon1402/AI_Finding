@@ -11,7 +11,6 @@ st.title("🌿 Species Trait Viewer (AI Result)")
 @st.cache_data
 def load_data():
     df = pd.read_csv("final Traits summary.csv")
-    # 괄호 숫자 제거 + 공백 제거
     df = df.applymap(lambda x: x.split(" (")[0].strip() if isinstance(x, str) else x)
     return df
 
@@ -39,12 +38,12 @@ trait_groups = {
 }
 
 # -------------------
-# trait value 분해 함수 (구분자 + 대소문자 통일)
+# trait value 분해 함수 (모든 구분자 대응 + 소문자화)
 # -------------------
 def split_trait_values(val):
     if pd.isna(val):
         return []
-    return [v.strip().lower() for v in re.split(r",| - |–| to |-", str(val)) if v.strip()]
+    return [v.strip().lower() for v in re.split(r",| - |–| to | and |\+|-", str(val)) if v.strip()]
 
 # -------------------
 # 페이지 선택
