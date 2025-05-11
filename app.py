@@ -9,7 +9,7 @@ st.title("🌿 Species Trait Viewer(AI Result)")
 # -------------------
 @st.cache_data
 def load_data():
-    return pd.read_csv("Final_Species_Traits.csv")
+    return pd.read_csv("fianl Traits summary.csv")
 
 df = load_data()
 species_list = sorted(df["species_name"].dropna().unique())
