@@ -3,7 +3,7 @@ import pandas as pd
 import re
 
 st.set_page_config(page_title="Species Trait Viewer", layout="wide")
-st.title("🌿 Species Trait Viewer")
+st.title("🌿 Species Trait Viewer (AI Result)")
 
 # -------------------
 # CSV 데이터 불러오기
@@ -11,6 +11,7 @@ st.title("🌿 Species Trait Viewer")
 @st.cache_data
 def load_data():
     df = pd.read_csv("final Traits summary.csv")
+    # 괄호 숫자 제거 + 공백 제거
     df = df.applymap(lambda x: x.split(" (")[0].strip() if isinstance(x, str) else x)
     return df
 
@@ -38,13 +39,12 @@ trait_groups = {
 }
 
 # -------------------
-# trait value 분할 함수 (다양한 표현 대응)
+# trait value 분해 함수 (구분자 + 대소문자 통일)
 # -------------------
 def split_trait_values(val):
     if pd.isna(val):
         return []
-    # 쉼표, 하이픈, to, 긴 대시 등으로 분리
-    return [v.strip() for v in re.split(r",| - |–| to |-", str(val)) if v.strip()]
+    return [v.strip().lower() for v in re.split(r",| - |–| to |-", str(val)) if v.strip()]
 
 # -------------------
 # 페이지 선택
@@ -84,7 +84,6 @@ elif page == "Find Flowers by Trait":
 
     selected_traits = st.multiselect("Select traits to filter by:", options=available_traits)
 
-    # 드롭다운 값 생성
     def extract_unique_values(trait):
         values = df[trait].dropna().astype(str)
         value_set = set()
