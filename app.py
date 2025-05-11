@@ -38,7 +38,7 @@ trait_groups = {
 }
 
 # -------------------
-# trait value 분해 함수
+# trait value 분해 함수 (모든 구분자 + 소문자 처리)
 # -------------------
 def split_trait_values(val):
     if pd.isna(val):
@@ -87,6 +87,7 @@ elif page == "Find Flowers by Trait":
         values = df[trait].dropna().astype(str)
         value_set = set()
         for v in values:
+            v = v.lower()  # 소문자화 중요!
             for item in split_trait_values(v):
                 value_set.add(item)
         return sorted(value_set)
@@ -94,7 +95,6 @@ elif page == "Find Flowers by Trait":
     filters = {}
     for trait in selected_traits:
         value_options = extract_unique_values(trait)
-        # 🟢 사용자가 선택한 값을 분해해서 리스트로 저장
         raw_selected_vals = st.multiselect(f"Values for **{trait}**", options=value_options)
         selected_vals = []
         for val in raw_selected_vals:
