@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import re
 
 st.set_page_config(page_title="Species Trait Viewer", layout="wide")
 st.title("🌿 Species Trait Viewer")
@@ -10,7 +11,6 @@ st.title("🌿 Species Trait Viewer")
 @st.cache_data
 def load_data():
     df = pd.read_csv("final Traits summary.csv")
-    # 괄호 숫자 제거 + 전체 문자열 strip
     df = df.applymap(lambda x: x.split(" (")[0].strip() if isinstance(x, str) else x)
     return df
 
@@ -38,6 +38,15 @@ trait_groups = {
 }
 
 # -------------------
+# trait value 분할 함수 (다양한 표현 대응)
+# -------------------
+def split_trait_values(val):
+    if pd.isna(val):
+        return []
+    # 쉼표, 하이픈, to, 긴 대시 등으로 분리
+    return [v.strip() for v in re.split(r",| - |–| to |-", str(val)) if v.strip()]
+
+# -------------------
 # 페이지 선택
 # -------------------
 st.sidebar.title("🌼 Navigation")
@@ -63,7 +72,7 @@ if page == "View Traits":
         st.info("Please select at least one species.")
 
 # -------------------
-# ② Find Flowers by Trait (smart value split)
+# ② Find Flowers by Trait
 # -------------------
 elif page == "Find Flowers by Trait":
     st.title("🔍 Find Flowers by Trait")
@@ -75,12 +84,13 @@ elif page == "Find Flowers by Trait":
 
     selected_traits = st.multiselect("Select traits to filter by:", options=available_traits)
 
+    # 드롭다운 값 생성
     def extract_unique_values(trait):
         values = df[trait].dropna().astype(str)
         value_set = set()
         for v in values:
-            for item in v.split(','):
-                value_set.add(item.strip())
+            for item in split_trait_values(v):
+                value_set.add(item)
         return sorted(value_set)
 
     filters = {}
@@ -94,9 +104,7 @@ elif page == "Find Flowers by Trait":
         filtered_df = df.copy()
         for trait, vals in filters.items():
             def match_any(val):
-                if pd.isna(val):
-                    return False
-                val_list = [v.strip() for v in str(val).split(',')]
+                val_list = split_trait_values(val)
                 return any(v in val_list for v in vals)
             filtered_df = filtered_df[filtered_df[trait].apply(match_any)]
 
