@@ -2,14 +2,17 @@ import streamlit as st
 import pandas as pd
 
 st.set_page_config(page_title="Species Trait Viewer", layout="wide")
-st.title("🌿 Species Trait Viewer(AI Result)")
+st.title("🌿 Species Trait Viewer")
 
 # -------------------
 # CSV 데이터 불러오기
 # -------------------
 @st.cache_data
 def load_data():
-    return pd.read_csv("fianl Traits summary.csv")
+    df = pd.read_csv("final Traits summary.csv")
+    # 괄호 숫자 제거 + 전체 문자열 strip
+    df = df.applymap(lambda x: x.split(" (")[0].strip() if isinstance(x, str) else x)
+    return df
 
 df = load_data()
 species_list = sorted(df["species_name"].dropna().unique())
@@ -60,7 +63,7 @@ if page == "View Traits":
         st.info("Please select at least one species.")
 
 # -------------------
-# ② Find Flowers by Trait
+# ② Find Flowers by Trait (smart value split)
 # -------------------
 elif page == "Find Flowers by Trait":
     st.title("🔍 Find Flowers by Trait")
@@ -72,17 +75,30 @@ elif page == "Find Flowers by Trait":
 
     selected_traits = st.multiselect("Select traits to filter by:", options=available_traits)
 
+    def extract_unique_values(trait):
+        values = df[trait].dropna().astype(str)
+        value_set = set()
+        for v in values:
+            for item in v.split(','):
+                value_set.add(item.strip())
+        return sorted(value_set)
+
     filters = {}
     for trait in selected_traits:
-        values = sorted(df[trait].dropna().unique().tolist())
-        selected_vals = st.multiselect(f"Values for **{trait}**", options=values)
+        value_options = extract_unique_values(trait)
+        selected_vals = st.multiselect(f"Values for **{trait}**", options=value_options)
         if selected_vals:
             filters[trait] = selected_vals
 
     if filters:
         filtered_df = df.copy()
         for trait, vals in filters.items():
-            filtered_df = filtered_df[filtered_df[trait].isin(vals)]
+            def match_any(val):
+                if pd.isna(val):
+                    return False
+                val_list = [v.strip() for v in str(val).split(',')]
+                return any(v in val_list for v in vals)
+            filtered_df = filtered_df[filtered_df[trait].apply(match_any)]
 
         st.subheader("🌼 Matching Species")
         if not filtered_df.empty:
