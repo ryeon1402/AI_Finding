@@ -83,22 +83,21 @@ elif page == "Find Flowers by Trait":
 
     selected_traits = st.multiselect("Select traits to filter by:", options=available_traits)
 
-    # 유일한 값 추출 (소문자화 + 분해 기준 통일)
+    # ✅ 완전히 정리된 드롭다운 값 추출
     def extract_unique_values(trait):
-        values = df[trait].dropna().astype(str).str.lower()
-        value_set = set()
-        for v in values:
-            for item in split_trait_values(v):
-                value_set.add(item)
-        return sorted(value_set)
+        values = df[trait].dropna().astype(str)
+        split_values = []
+        for val in values:
+            split_values.extend(split_trait_values(val))
+        return sorted(set(split_values))
 
     filters = {}
     for trait in selected_traits:
-        value_options = extract_unique_values(trait)
+        value_options = extract_unique_values(trait)  # 💯 정제된 값만 드롭다운에
         raw_selected_vals = st.multiselect(f"Values for **{trait}**", options=value_options)
         selected_vals = []
         for val in raw_selected_vals:
-            selected_vals.extend(split_trait_values(val))  # 선택된 것도 다시 분해
+            selected_vals.extend(split_trait_values(val))
         if selected_vals:
             filters[trait] = list(set(selected_vals))
 
