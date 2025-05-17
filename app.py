@@ -5,21 +5,17 @@ import re
 st.set_page_config(page_title="Species Trait Viewer", layout="wide")
 st.title("🌿 Species Trait Viewer")
 
-# -------------------
-# CSV 데이터 불러오기
-# -------------------
+# Load and clean CSV data
 @st.cache_data
 def load_data():
-    df = pd.read_csv("final Traits summary.csv")
+    df = pd.read_csv("final Traits summary.csv")  # Make sure this file is in the working directory
     df = df.applymap(lambda x: x.split(" (")[0].strip() if isinstance(x, str) else x)
     return df
 
 df = load_data()
 species_list = sorted(df["species_name"].dropna().unique())
 
-# -------------------
-# trait 그룹 정의
-# -------------------
+# Trait groups organized by category
 trait_groups = {
     "Blossoming": ["flowering_cues", "flowering_time"],
     "Botany": ["bud_bank_location", "clonal_spread_mechanism", "flower_structural_sex_type", "genome_size", "ploidy", "root_system_type", "sex_type"],
@@ -37,17 +33,13 @@ trait_groups = {
     "Water response": ["plant_flood_regime_classification", "plant_tolerance_inundation", "plant_tolerance_snow", "plant_tolerance_water_logged_soils"]
 }
 
-# -------------------
-# trait value 분해 함수 (모든 구분자, 소문자 처리 포함)
-# -------------------
+# Split trait values by delimiters and lowercase them
 def split_trait_values(val):
     if pd.isna(val):
         return []
     return [v.strip().lower() for v in re.split(r",| - |–| to | and |\+|-", str(val)) if v.strip()]
 
-# -------------------
-# 드롭다운에 표시할 값 (모든 표현 분해해서 개별로만 표시)
-# -------------------
+# Extract unique values for each trait to use in dropdowns
 def extract_dropdown_values(trait):
     values = df[trait].dropna().astype(str)
     dropdown_set = set()
@@ -56,15 +48,11 @@ def extract_dropdown_values(trait):
         dropdown_set.update(split_vals)
     return sorted(dropdown_set)
 
-# -------------------
-# 페이지 선택
-# -------------------
+# Sidebar navigation
 st.sidebar.title("🌼 Navigation")
 page = st.sidebar.radio("Choose a page:", ["View Traits", "Find Flowers by Trait", "Compare Traits"])
 
-# -------------------
-# ① View Traits
-# -------------------
+# Page ① View Traits by selected species
 if page == "View Traits":
     st.title("🌿 View Traits by Species")
     selected_species = st.multiselect("Select one or more species:", species_list)
@@ -81,9 +69,7 @@ if page == "View Traits":
     else:
         st.info("Please select at least one species.")
 
-# -------------------
-# ② Find Flowers by Trait
-# -------------------
+# Page ② Filter species by selected trait values
 elif page == "Find Flowers by Trait":
     st.title("🔍 Find Flowers by Trait")
     selected_groups = st.multiselect("Select trait groups:", list(trait_groups.keys()))
@@ -96,10 +82,9 @@ elif page == "Find Flowers by Trait":
 
     filters = {}
     for trait in selected_traits:
-        value_options = extract_dropdown_values(trait)  # ✅ 분해된 값만 표시
+        value_options = extract_dropdown_values(trait)
         raw_selected_vals = st.multiselect(f"Values for **{trait}**", options=value_options)
 
-        # ✅ 선택한 값도 다시 분해해서 비교용으로 저장
         selected_vals = []
         for val in raw_selected_vals:
             selected_vals.extend(split_trait_values(val.lower()))
@@ -122,9 +107,7 @@ elif page == "Find Flowers by Trait":
     else:
         st.info("Please select at least one trait and value.")
 
-# -------------------
-# ③ Compare Traits
-# -------------------
+# Page ③ Compare traits of selected species
 elif page == "Compare Traits":
     st.title("📊 Compare Traits Across Multiple Species")
     selected_species = st.multiselect("Select species to compare:", species_list)
